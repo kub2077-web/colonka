@@ -1,0 +1,10 @@
+name: Compile ESPHome
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: esphome/build-action@v3
+        with:
+          yaml_file: esp32-s3-speaker.yaml
