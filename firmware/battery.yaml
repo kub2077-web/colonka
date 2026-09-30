@@ -84,7 +84,7 @@ binary_sensor:
       name: "Критический заряд аккумулятора"
       id: battery_critical
     battery_shutdown:
-      name: "Требуется exclusion по разряду"
+      name: "Требуется отключение по разряду"
       id: battery_shutdown
       on_press:
         - if:
@@ -94,13 +94,3 @@ binary_sensor:
               - logger.log: "Порог отключения достигнут, но зарядка доступна — отключение отложено"
             else:
               - script.execute: battery_enter_shutdown
-
-text_sensor:
-  - platform: bq25895
-    bq25895_id: battery_controller
-    charge_status:
-      name: "Статус зарядки"
-      id: battery_charge_status
-    fault_status:
-      name: "Статус ошибки зарядки"
-      id: battery_fault_status
