@@ -58,15 +58,16 @@ bq25895:
   charge_current_sensor:
     name: "Ток заряда"
     id: battery_charge_current
-  input_current_limit_sensor:
-    name: "Ограничение входного тока"
-    id: battery_input_current_limit
-  battery_percent:
-    name: "Оценка заряда аккумулятора"
-    id: battery_percent
-  temperature_adc:
-    name: "Уровень NTC BQ25895"
-    id: battery_ntc_level
+    input_current_limit_sensor:
+      name: "Ограничение входного тока"
+      id: battery_input_current_limit
+    battery_percent:
+      name: "Оценка заряда аккумулятора"
+      id: battery_percent
+    temperature_adc:
+      name: "Уровень NTC BQ25895"
+      id: battery_ntc_level
+
 
   charging:
     name: "Аккумулятор заряжается"
