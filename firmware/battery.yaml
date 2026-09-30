@@ -47,32 +47,32 @@ bq25895:
   shutdown_percent: 5
 
   battery_voltage:
-    name: "Напряжение аккумулятора"
+    name: "Напряжение аккумулятора B1"
     id: battery_voltage
   system_voltage:
-    name: "Системное напряжение"
+    name: "Системное напряжение B2"
     id: battery_system_voltage
   input_voltage:
-    name: "Входное напряжение зарядки"
+    name: "Входное напряжение зарядки B3"
     id: battery_input_voltage
   charge_current_sensor:
-    name: "Ток заряда"
+    name: "Ток заряда B4"
     id: battery_charge_current
   input_current_limit_sensor:
-    name: "Ограничение входного тока"
+    name: "Ограничение входного тока B5"
     id: battery_input_current_limit
   battery_percent:
-    name: "Оценка заряда аккумулятора"
+    name: "Оценка заряда аккумулятора B6"
     id: battery_percent
   temperature_adc:
-    name: "Уровень NTC BQ25895"
+    name: "Уровень NTC BQ25895 B7"
     id: battery_ntc_level
 
   charging:
-    name: "Аккумулятор заряжается"
+    name: "Аккумулятор заряжается C1"
     id: battery_is_charging
   power_good:
-    name: "Питание зарядки доступно"
+    name: "Питание зарядки доступно C2"
     id: battery_power_good
     on_release:
       - delay: 1s
@@ -82,22 +82,22 @@ bq25895:
           then:
             - script.execute: battery_enter_shutdown
   battery_full:
-    name: "Аккумулятор заряжен"
+    name: "Аккумулятор заряжен C3"
     id: battery_full
   boost_active:
-    name: "Повышающий преобразователь активен"
+    name: "Повышающий преобразователь активен C4"
     id: battery_boost_active
   charger_fault:
-    name: "Ошибка контроллера батареи"
+    name: "Ошибка контроллера батареи C5"
     id: battery_charger_fault
   battery_low:
-    name: "Низкий заряд аккумулятора"
+    name: "Низкий заряд аккумулятора C6"
     id: battery_low
   battery_critical:
-    name: "Критический заряд аккумулятора"
+    name: "Критический заряд аккумулятора C7"
     id: battery_critical
   battery_shutdown:
-    name: "Требуется отключение по разряду"
+    name: "Требуется отключение по разряду C8"
     id: battery_shutdown
     on_press:
       - if:
@@ -109,8 +109,8 @@ bq25895:
             - script.execute: battery_enter_shutdown
 
   charge_status:
-    name: "Статус зарядки"
+    name: "Статус зарядки T1"
     id: battery_charge_status
   fault_status:
-    name: "Статус ошибки зарядки"
+    name: "Статус ошибки зарядки T2"
     id: battery_fault_status
