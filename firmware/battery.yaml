@@ -64,9 +64,9 @@ bq25895:
     battery_percent:
       name: "Оценка заряда аккумулятора"
       id: battery_percent
-    temperature_adc:
-      name: "Уровень NTC BQ25895"
-      id: battery_ntc_level
+#    temperature_adc:
+#      name: "Уровень NTC BQ25895"
+#      id: battery_ntc_level
 
 
   charging:
