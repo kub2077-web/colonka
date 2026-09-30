@@ -377,11 +377,11 @@ button:
       - script.execute: sd_scan
 
 
-  on_boot:
-    priority: -85
-    then:
-      - lambda: |-
-          id(sd_player_instance) = new SdPlayer();
-          id(sd_player_instance)->begin(
-              ${i2s_bclk_num}, ${i2s_ws_num}, ${i2s_speaker_data_num});
-      - script.execute: sd_bootstrap
+on_boot:
+  priority: -85
+  then:
+    - lambda: |-
+        id(sd_player_instance) = new SdPlayer();
+        static_cast<SdPlayer *>(id(sd_player_instance))->begin(
+            ${i2s_bclk_num}, ${i2s_ws_num}, ${i2s_speaker_data_num});
+    - script.execute: sd_bootstrap
