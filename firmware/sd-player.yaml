@@ -18,10 +18,10 @@
 
 globals:
   - id: sd_player_instance
-    type: SdPlayer *
+    type: void *
     restore_value: no
     initial_value: "nullptr"
-
+    
   - id: sd_start_result
     type: bool
     restore_value: no
