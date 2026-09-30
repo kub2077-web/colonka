@@ -112,7 +112,6 @@ esphome:
   # СЮДА СОБИРАЕМ ВСЕ ХЕДЕРЫ ПРОЕКТА:
   includes:
     - sd_player.h
-    - radio_station_store.h
   platformio_options:
     build_flags:
       - -DCORE_DEBUG_LEVEL=0
