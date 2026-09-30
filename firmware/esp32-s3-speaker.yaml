@@ -324,7 +324,7 @@ light:
     name: "Кольцо состояния"
     pin: ${ws2812_data}
     num_leds: 8
-    channel_colors: GRB
+    rgb_order: GRB
     chipset: WS2812
     restore_mode: ALWAYS_OFF
 
