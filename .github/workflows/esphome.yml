@@ -5,6 +5,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: esphome/build-action@v3
+      - uses: esphome/build-action@v4
         with:
           yaml_file: esp32-s3-speaker.yaml
