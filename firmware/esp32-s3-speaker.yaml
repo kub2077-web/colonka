@@ -109,6 +109,10 @@ esphome:
   name: ${device_name}
   friendly_name: ${friendly_name}
   min_version: 2025.7.0
+  # СЮДА СОБИРАЕМ ВСЕ ХЕДЕРЫ ПРОЕКТА:
+  includes:
+    - sd_player.h
+    - radio_station_store.h
   platformio_options:
     build_flags:
       - -DCORE_DEBUG_LEVEL=0
