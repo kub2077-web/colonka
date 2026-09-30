@@ -82,6 +82,23 @@ substitutions:
   # GPIO44 — U0RXD
   # Эти выводы используются для данных I2S, поэтому UART-лог отключён.
 
+# SDMMC и web-файловый сервер не входят в базовый набор ESPHome.
+# Версия зафиксирована, чтобы обновление ветки main не ломало прошивку.
+external_components:
+  - source:
+      type: git
+      url: https://github.com/n-serrette/esphome_sd_card
+      ref: v0.2.0
+    components:
+      - sd_mmc_card
+      - sd_file_server
+  - source:
+      type: local
+      path: components
+    components:
+      - esp_dsp
+      - bq25895
+
 packages:
   state_machine: !include state-machine.yaml
   sd_player: !include sd-player.yaml
@@ -127,23 +144,6 @@ esp32:
 psram:
   mode: octal
   speed: 80MHz
-
-# SDMMC и web-файловый сервер не входят в базовый набор ESPHome.
-# Версия зафиксирована, чтобы обновление ветки main не ломало прошивку.
-external_components:
-  - source:
-      type: git
-      url: https://github.com/n-serrette/esphome_sd_card
-      ref: v0.2.0
-    components:
-      - sd_mmc_card
-      - sd_file_server
-  - source:
-      type: local
-      path: components
-    components:
-      - esp_dsp
-      - bq25895
 
 esp_dsp:
 
