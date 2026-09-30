@@ -1,4 +1,5 @@
 # Автономный пакет мониторинга и базовой настройки BQ25895.
+# Сконфигурировано строго по исходному коду кастомного компонента умной колонки.
 
 script:
   - id: battery_enter_shutdown
@@ -19,78 +20,89 @@ bq25895:
   id: battery_controller
   address: 0x6A
   update_interval: 10s
+
+  # Параметры, записываемые в BQ25895 при старте.
   input_current_limit: 1000
   charge_current: 640
   charge_voltage: 4208
   precharge_current: 128
   termination_current: 128
   charge_enabled: true
+
+  # Информационные параметры аккумулятора.
   battery_capacity: 1300
   warning_percent: 25
   critical_percent: 10
   shutdown_percent: 5
 
-sensor:
-  - platform: bq25895
-    bq25895_id: battery_controller
-    battery_voltage:
-      name: "Напряжение аккумулятора"
-      id: battery_voltage
-    system_voltage:
-      name: "Системное напряжение"
-      id: battery_system_voltage
-    input_voltage:
-      name: "Входное напряжение зарядки"
-      id: battery_input_voltage
-    charge_current_sensor:
-      name: "Ток заряда"
-      id: battery_charge_current
-    input_current_limit_sensor:
-      name: "Ограничение входного тока"
-      id: battery_input_current_limit
-    battery_percent:
-      name: "Оценка заряда аккумулятора"
-      id: battery_percent
+  # Аналоговые сенсоры (Имена строго по CONFIG_SCHEMA в __init__.py)
+  battery_voltage:
+    name: "Напряжение аккумулятора"
+    id: battery_voltage
+  system_voltage:
+    name: "Системное напряжение"
+    id: battery_system_voltage
+  input_voltage:
+    name: "Входное напряжение зарядки"
+    id: battery_input_voltage
+  charge_current_sensor:
+    name: "Ток заряда"
+    id: battery_charge_current
+  input_current_limit_sensor:
+    name: "Ограничение входного тока"
+    id: battery_input_current_limit
+  battery_percent:
+    name: "Оценка заряда аккумулятора"
+    id: battery_percent
+  temperature_adc:
+    name: "Уровень NTC BQ25895"
+    id: battery_ntc_level
 
-binary_sensor:
-  - platform: bq25895
-    bq25895_id: battery_controller
-    charging:
-      name: "Аккумулятор заряжается"
-      id: battery_is_charging
-    power_good:
-      name: "Питание зарядки доступно"
-      id: battery_power_good
-      on_release:
-        - delay: 1s
-        - if:
-            condition:
-              lambda: return id(battery_shutdown).state && !id(battery_is_charging).state && !id(battery_power_good).state;
-            then:
-              - script.execute: battery_enter_shutdown
-    battery_full:
-      name: "Аккумулятор заряжен"
-      id: battery_full
-    boost_active:
-      name: "Повышающий преобразователь активен"
-      id: battery_boost_active
-    charger_fault:
-      name: "Ошибка контроллера батареи"
-      id: battery_charger_fault
-    battery_low:
-      name: "Низкий заряд аккумулятора"
-      id: battery_low
-    battery_critical:
-      name: "Критический заряд аккумулятора"
-      id: battery_critical
-    battery_shutdown:
-      name: "Требуется отключение по разряду"
-      id: battery_shutdown
-      on_press:
-        - if:
-            condition:
-              lambda: return id(battery_power_good).state || id(battery_is_charging).state;
-            then:
-              - logger.log: "Порог отключения достигнут, но зарядка доступна — отключение отложено"
-            else:
-              - script.execute: battery_enter_shutdown
+  # Бинарные сенсоры (Логика on_release перенесена на верный ID бинарного датчика)
+  charging:
+    name: "Accumulator заpяжается"
+    id: battery_is_charging
+  power_good:
+    name: "Питание зарядки доступно"
+    id: battery_power_good
+    on_release:
+      - delay: 1s
+      - if:
+          condition:
+            lambda: return id(battery_shutdown).state && !id(battery_is_charging).state && !id(battery_power_good).state;
+          then:
+            - script.execute: battery_enter_shutdown
+  battery_full:
+    name: "Аккумулятор заряжен"
+    id: battery_full
+  boost_active:
+    name: "Повышающий преобразователь активен"
+    id: battery_boost_active
+  charger_fault:
+    name: "Ошибка контроллера батареи"
+    id: battery_charger_fault
+  battery_low:
+    name: "Низкий заряд аккумулятора"
+    id: battery_low
+  battery_critical:
+    name: "Критический заряд аккумулятора"
+    id: battery_critical
+  battery_shutdown:
+    name: "Требуется отключение по разряду"
+    id: battery_shutdown
+    on_press:
+      - if:
+          condition:
+            lambda: return id(battery_power_good).state || id(battery_is_charging).state;
+          then:
+            - logger.log: "Порог отключения достигнут, но зарядка доступна — отключение отложено"
+          else:
+            - script.execute: battery_enter_shutdown
+
+  # Текстовые диагностические датчики (Имена по CONFIG_SCHEMA в __init__.py)
+  charge_status:
+    name: "Статус зарядки"
+    id: battery_charge_status
+  fault_status:
+    name: "Статус ошибки зарядки"
+    id: battery_fault_status
