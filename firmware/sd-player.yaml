@@ -18,7 +18,7 @@
 
 globals:
   - id: sd_player_instance
-    type: SdPlayer *
+    type: custom_component::CustomComponentConstructor *
     restore_value: no
     initial_value: "nullptr"
     
