@@ -17,8 +17,6 @@
 # библиотека использует I2S1, а голосовой bus ESPHome остаётся на I2S0.
 
 # Объявляем реальное физическое хранилище для нашего внешнего указателя C++
-esphome:
-  custom_code: "SdPlayer *my_sd_player = nullptr;"
 
 globals:
   - id: sd_start_result
