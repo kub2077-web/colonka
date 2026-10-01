@@ -121,8 +121,7 @@ esphome:
     - ${audio_lib_url}
   platformio_options:
     build_flags:
-      - -DCORE_DEBUG_LEVEL=0
-    board_build.partitions: huge_app.csv      
+      - -DCORE_DEBUG_LEVEL=0     
 
   on_boot:
     priority: -100
