@@ -1,0 +1,649 @@
+# Автономное интернет-радио для ESP32-S3 Smart Speaker.
+#
+# Подключение из основной конфигурации:
+#
+# packages:
+#   radio: !include radio.yaml
+#
+# Пакет ожидает:
+# - speaker id: voice_speaker
+# - scripts from state-machine.yaml:
+#     sm_set_radio_source
+#     sm_playback_started
+#     sm_playback_failed
+#     sm_route_stop
+# - globals from state-machine.yaml:
+#     sm_playback_source
+#     sm_next_requested
+#     sm_previous_requested
+#     sm_stop_requested
+#
+# Шесть слотов станций хранятся отдельными text/switch entities во flash-памяти
+# контроллера и редактируются через встроенный веб-сервер ESPHome. Значения
+# initial_value являются первичной предзагрузкой при первом запуске, а
+# restore_value сохраняет последующие изменения во flash.
+# Для первой версии используются прямые MP3-потоки по HTTP/HTTPS.
+
+globals:
+  - id: radio_current_station
+    type: int
+    restore_value: yes
+    initial_value: "0"
+
+  - id: radio_station_count
+    type: int
+    restore_value: no
+    initial_value: "0"
+
+  - id: radio_current_station_url
+    type: std::string
+    restore_value: no
+    initial_value: '""'
+
+  - id: radio_failed_attempts
+    type: int
+    restore_value: no
+    initial_value: "0"
+
+  - id: radio_connecting
+    type: bool
+    restore_value: no
+    initial_value: "false"
+
+  - id: radio_connect_deadline
+    type: uint32_t
+    restore_value: no
+    initial_value: "0"
+
+  # true suppresses the idle callback caused by an intentional stop.
+  - id: radio_stop_expected
+    type: bool
+    restore_value: no
+    initial_value: "true"
+
+  - id: radio_paused
+    type: bool
+    restore_value: no
+    initial_value: "false"
+
+text_sensor:
+  - platform: template
+    id: radio_current_station_name
+    name: "Текущая радиостанция 30"
+    update_interval: never
+
+  - platform: template
+    id: radio_status
+    name: "Состояние радио 31"
+    update_interval: never
+
+text:
+  - platform: template
+    id: radio_station_1_name
+    name: "Радиостанция 1 — название"
+    icon: "mdi:radio"
+    mode: text
+    min_length: 1
+    max_length: 64
+    restore_value: true
+    optimistic: true
+    initial_value: "Наше Радио"
+    set_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_1_url
+    name: "Радиостанция 1 — URL"
+    icon: "mdi:link"
+    mode: text
+    min_length: 8
+    max_length: 255
+    restore_value: true
+    optimistic: true
+    initial_value: "https://nashe1.hostingradio.ru/nashe-256"
+    set_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_2_name
+    name: "Радиостанция 2 — название"
+    icon: "mdi:radio"
+    mode: text
+    min_length: 1
+    max_length: 64
+    restore_value: true
+    optimistic: true
+    initial_value: "Радио Дача"
+    set_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_2_url
+    name: "Радиостанция 2 — URL"
+    icon: "mdi:link"
+    mode: text
+    min_length: 8
+    max_length: 255
+    restore_value: true
+    optimistic: true
+    initial_value: "https://listen15.vdfm.ru:8000/dacha?type=.mp3"
+    set_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_3_name
+    name: "Радиостанция 3 — название"
+    icon: "mdi:radio"
+    mode: text
+    min_length: 1
+    max_length: 64
+    restore_value: true
+    optimistic: true
+    initial_value: "Радио Родных Дорог"
+    set_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_3_url
+    name: "Радиостанция 3 — URL"
+    icon: "mdi:link"
+    mode: text
+    min_length: 8
+    max_length: 255
+    restore_value: true
+    optimistic: true
+    initial_value: "https://dorognoe.hostingradio.ru/dorognoe"
+    set_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_4_name
+    name: "Радиостанция 4 — название"
+    icon: "mdi:radio"
+    mode: text
+    min_length: 1
+    max_length: 64
+    restore_value: true
+    optimistic: true
+    initial_value: "Европа Плюс"
+    set_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_4_url
+    name: "Радиостанция 4 — URL"
+    icon: "mdi:link"
+    mode: text
+    min_length: 8
+    max_length: 255
+    restore_value: true
+    optimistic: true
+    initial_value: "https://ep256.hostingradio.ru:8052/europaplus256.mp3"
+    set_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_5_name
+    name: "Радиостанция 5 — название"
+    icon: "mdi:radio"
+    mode: text
+    min_length: 1
+    max_length: 64
+    restore_value: true
+    optimistic: true
+    initial_value: "Маруся FM"
+    set_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_5_url
+    name: "Радиостанция 5 — URL"
+    icon: "mdi:link"
+    mode: text
+    min_length: 8
+    max_length: 255
+    restore_value: true
+    optimistic: true
+    initial_value: "https://radio-holding.ru:9433/marusya_default"
+    set_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_6_name
+    name: "Радиостанция 6 — название"
+    icon: "mdi:radio"
+    mode: text
+    min_length: 1
+    max_length: 64
+    restore_value: true
+    optimistic: true
+    initial_value: "Ретро FM"
+    set_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_6_url
+    name: "Радиостанция 6 — URL"
+    icon: "mdi:link"
+    mode: text
+    min_length: 8
+    max_length: 255
+    restore_value: true
+    optimistic: true
+    initial_value: "https://retro.hostingradio.ru:8043/retro256.mp3"
+    set_action:
+      - script.execute: radio_station_settings_changed
+
+switch:
+  - platform: template
+    id: radio_station_1_enabled
+    name: "Радиостанция 1 — включена"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - script.execute: radio_station_settings_changed
+    turn_off_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_2_enabled
+    name: "Радиостанция 2 — включена"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - script.execute: radio_station_settings_changed
+    turn_off_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_3_enabled
+    name: "Радиостанция 3 — включена"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - script.execute: radio_station_settings_changed
+    turn_off_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_4_enabled
+    name: "Радиостанция 4 — включена"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - script.execute: radio_station_settings_changed
+    turn_off_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_5_enabled
+    name: "Радиостанция 5 — включена"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - script.execute: radio_station_settings_changed
+    turn_off_action:
+      - script.execute: radio_station_settings_changed
+
+  - platform: template
+    id: radio_station_6_enabled
+    name: "Радиостанция 6 — включена"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - script.execute: radio_station_settings_changed
+    turn_off_action:
+      - script.execute: radio_station_settings_changed
+
+speaker:
+  # The media and announcement pipelines are separate inputs, but both feed
+  # the physical speaker declared by the base configuration. Playback remains
+  # exclusive with the voice assistant until a dedicated ducking policy is
+  # enabled.
+  - platform: mixer
+    id: radio_output_mixer
+    output_speaker: voice_speaker
+    source_speakers:
+      - id: radio_media_mixer_input
+      - id: radio_announcement_mixer_input
+
+media_player:
+  - platform: speaker
+    id: radio_media_player
+    name: "Локальное радио"
+    media_pipeline:
+      speaker: radio_media_mixer_input
+      format: MP3
+      sample_rate: 16000
+      num_channels: 1
+    announcement_pipeline:
+      speaker: radio_announcement_mixer_input
+      format: MP3
+      sample_rate: 16000
+      num_channels: 1
+    buffer_size: 1000000
+    task_stack_in_psram: true
+    on_play:
+      - script.execute: radio_on_play
+    on_idle:
+      - if:
+          condition:
+            lambda: return !id(radio_stop_expected) && !id(radio_paused);
+          then:
+            - script.execute: radio_on_stream_failed
+
+script:
+  - id: radio_station_settings_changed
+    mode: restart
+    then:
+      - script.execute: radio_refresh_station_index
+      - script.execute: radio_load_current_station
+
+  - id: radio_refresh_station_index
+    mode: restart
+    then:
+      - lambda: |-
+          const radio_station_store::StationSlot stations[] = {
+              {"nashe", id(radio_station_1_name).state,
+               id(radio_station_1_url).state,
+               id(radio_station_1_enabled).state},
+              {"dacha", id(radio_station_2_name).state,
+               id(radio_station_2_url).state,
+               id(radio_station_2_enabled).state},
+              {"rodnyh-dorog", id(radio_station_3_name).state,
+               id(radio_station_3_url).state,
+               id(radio_station_3_enabled).state},
+              {"europa-plus", id(radio_station_4_name).state,
+               id(radio_station_4_url).state,
+               id(radio_station_4_enabled).state},
+              {"marusya", id(radio_station_5_name).state,
+               id(radio_station_5_url).state,
+               id(radio_station_5_enabled).state},
+              {"retro-fm", id(radio_station_6_name).state,
+               id(radio_station_6_url).state,
+               id(radio_station_6_enabled).state}};
+          const int count = radio_station_store::enabled_count(
+              stations, sizeof(stations) / sizeof(stations[0]));
+          id(radio_station_count) = count;
+          if (count <= 0) {
+            id(radio_current_station) = 0;
+          } else if (id(radio_current_station) >= count) {
+            id(radio_current_station) = 0;
+          }
+
+  - id: radio_load_current_station
+    mode: restart
+    then:
+      - lambda: |-
+          const radio_station_store::StationSlot stations[] = {
+              {"nashe", id(radio_station_1_name).state,
+               id(radio_station_1_url).state,
+               id(radio_station_1_enabled).state},
+              {"dacha", id(radio_station_2_name).state,
+               id(radio_station_2_url).state,
+               id(radio_station_2_enabled).state},
+              {"rodnyh-dorog", id(radio_station_3_name).state,
+               id(radio_station_3_url).state,
+               id(radio_station_3_enabled).state},
+              {"europa-plus", id(radio_station_4_name).state,
+               id(radio_station_4_url).state,
+               id(radio_station_4_enabled).state},
+              {"marusya", id(radio_station_5_name).state,
+               id(radio_station_5_url).state,
+               id(radio_station_5_enabled).state},
+              {"retro-fm", id(radio_station_6_name).state,
+               id(radio_station_6_url).state,
+               id(radio_station_6_enabled).state}};
+          radio_station_store::Station station;
+          const bool loaded = radio_station_store::get_enabled_station(
+              stations, sizeof(stations) / sizeof(stations[0]),
+              id(radio_current_station), station);
+          if (!loaded) {
+            id(radio_current_station_url).clear();
+            id(radio_current_station_name).publish_state("Нет станций");
+            return;
+          }
+          id(radio_current_station_url) = station.url;
+          id(radio_current_station_name).publish_state(station.name);
+
+  - id: radio_publish_status
+    mode: restart
+    parameters:
+      state: string
+    then:
+      - text_sensor.template.publish:
+          id: radio_status
+          state: !lambda "return state;"
+
+  - id: radio_start
+    mode: restart
+    then:
+      - script.execute:
+          id: sm_audio_acquire
+          requested_owner: 1
+      - lambda: |-
+          id(radio_stop_expected) = true;
+          id(radio_paused) = false;
+          id(sm_stop_requested) = false;
+          id(radio_connecting) = false;
+      - media_player.stop:
+          id: radio_media_player
+      - script.execute: sm_set_radio_source
+      - media_player.volume_set:
+          id: radio_media_player
+          volume: !lambda "return id(sm_volume_level);"
+      - script.execute: radio_refresh_station_index
+      - script.execute: radio_load_current_station
+      - lambda: |-
+          id(radio_stop_expected) = false;
+          id(radio_connecting) = true;
+          id(radio_connect_deadline) = millis() + 15000;
+      - script.execute:
+          id: radio_publish_status
+          state: "Подключение"
+      - if:
+          condition:
+            lambda: return !id(radio_current_station_url).empty();
+          then:
+            - media_player.play_media:
+                id: radio_media_player
+                media_url: !lambda "return id(radio_current_station_url);"
+          else:
+            - lambda: id(radio_connecting) = false;
+            - script.execute: sm_playback_failed
+            - script.execute:
+                id: radio_publish_status
+                state: "Нет доступных станций"
+
+  - id: radio_apply_stop
+    mode: restart
+    then:
+      - lambda: |-
+          id(radio_stop_expected) = true;
+          id(radio_paused) = false;
+          id(sm_stop_requested) = false;
+          id(radio_connecting) = false;
+          if (id(sm_audio_owner) == 1) {
+            id(sm_audio_owner) = 0;
+          }
+      - media_player.stop:
+          id: radio_media_player
+      - script.execute:
+          id: radio_publish_status
+          state: "Остановлено"
+
+  - id: radio_pause
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: return id(radio_paused);
+          then:
+            - media_player.play:
+                id: radio_media_player
+            - lambda: id(radio_paused) = false;
+            - script.execute: sm_playback_started
+            - script.execute:
+                id: radio_publish_status
+                state: "Воспроизводится"
+          else:
+            - media_player.pause:
+                id: radio_media_player
+            - lambda: id(radio_paused) = true;
+            - script.execute: sm_playback_paused
+            - script.execute:
+                id: radio_publish_status
+                state: "Пауза"
+
+  - id: radio_request_stop
+    mode: restart
+    then:
+      - script.execute: sm_route_stop
+      - script.execute: radio_apply_stop
+
+  - id: radio_on_play
+    mode: restart
+    then:
+      - lambda: |-
+          id(radio_connecting) = false;
+          id(radio_paused) = false;
+          id(radio_failed_attempts) = 0;
+      - script.execute: sm_playback_started
+      - script.execute:
+          id: radio_publish_status
+          state: "Воспроизводится"
+
+  - id: radio_on_stream_failed
+    mode: restart
+    then:
+      - lambda: |-
+          id(radio_connecting) = false;
+          if (id(sm_audio_owner) == 1) {
+            id(sm_audio_owner) = 0;
+          }
+      - if:
+          condition:
+            lambda: |-
+              return id(radio_station_count) > 0 &&
+                     id(radio_failed_attempts) < id(radio_station_count) - 1;
+          then:
+            - lambda: |-
+                id(radio_failed_attempts)++;
+                id(radio_current_station) =
+                    (id(radio_current_station) + 1) % id(radio_station_count);
+            - logger.log: "Радио: поток не отвечает, переход к следующей станции"
+            - script.execute: radio_start
+          else:
+            - lambda: id(radio_failed_attempts) = 0;
+            - script.execute: sm_playback_failed
+            - script.execute:
+                id: radio_publish_status
+                state: "Нет рабочей станции"
+
+  - id: radio_next
+    mode: restart
+    then:
+      - lambda: id(radio_failed_attempts) = 0;
+      - lambda: |-
+          if (id(radio_station_count) > 0) {
+            id(radio_current_station) =
+                (id(radio_current_station) + 1) % id(radio_station_count);
+          }
+      - script.execute: radio_start
+
+  - id: radio_previous
+    mode: restart
+    then:
+      - lambda: id(radio_failed_attempts) = 0;
+      - lambda: |-
+          if (id(radio_station_count) > 0) {
+            id(radio_current_station) =
+                (id(radio_current_station) + id(radio_station_count) - 1) %
+                id(radio_station_count);
+          }
+      - script.execute: radio_start
+
+  # The state machine sets request flags. This package consumes only requests
+  # belonging to the radio source, so an SD module can use the same flags.
+  - id: radio_consume_router_requests
+    mode: restart
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(sm_playback_source) == 1 &&
+                     id(sm_next_requested);
+          then:
+            - lambda: id(sm_next_requested) = false;
+            - script.execute: radio_next
+      - if:
+          condition:
+            lambda: |-
+              return id(sm_playback_source) == 1 &&
+                     id(sm_previous_requested);
+          then:
+            - lambda: id(sm_previous_requested) = false;
+            - script.execute: radio_previous
+      - if:
+          condition:
+            lambda: |-
+              return id(sm_playback_source) == 1 &&
+                     id(sm_stop_requested);
+          then:
+            - script.execute: radio_apply_stop
+
+  - id: radio_bootstrap
+    mode: restart
+    then:
+      - script.execute: radio_refresh_station_index
+      - script.execute: radio_load_current_station
+      - script.execute:
+          id: radio_publish_status
+          state: "Остановлено"
+
+interval:
+  - interval: 250ms
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(radio_connecting) &&
+                     static_cast<int32_t>(millis() - id(radio_connect_deadline)) >= 0;
+          then:
+            - logger.log: "Радио: тайм-аут подключения станции"
+            - script.execute: radio_on_stream_failed
+      - script.execute: radio_consume_router_requests
+
+button:
+  - platform: template
+    name: "Запустить радио 60"
+    id: radio_start_button
+    on_press:
+      - lambda: id(radio_failed_attempts) = 0;
+      - script.execute: radio_start
+
+  - platform: template
+    name: "Остановить радио 61"
+    id: radio_stop_button
+    on_press:
+      - script.execute: radio_request_stop
+
+  - platform: template
+    name: "Следующая радиостанция 62"
+    id: radio_next_button
+    on_press:
+      - script.execute: radio_next
+
+  - platform: template
+    name: "Предыдущая радиостанция 63"
+    id: radio_previous_button
+    on_press:
+      - script.execute: radio_previous
+
+esphome:
+  includes:
+    - radio_station_store.h
+  on_boot:
+    priority: -90
+    then:
+      - script.execute: radio_bootstrap
