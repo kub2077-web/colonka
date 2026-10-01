@@ -28,5 +28,5 @@ jobs:
         with:
           name: esp-project-files
           path: |
-            firmware/.esphome/build/*/.pioenvs/*/firmware.bin
+            firmware/.esphome/build/**/.pioenvs/**/*.bin
             firmware/.esphome/build/*/src/main.cpp
