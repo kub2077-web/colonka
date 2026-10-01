@@ -20,6 +20,10 @@
 substitutions:
   device_name: esp32-s3-smart-speaker
   friendly_name: Умная колонка ESP32-S3
+  
+  # Собираем путь из двух частей, чтобы парсер не обрезал спецсимволы:
+  git_base: "https://github.com"
+  audio_lib_url: "ESP32-audioI2S=${git_base}/schreibfaul1/ESP32-audioI2S.git#3.4.7"
 
   # ============================================================
   # КАРТА GPIO ПРОЕКТА — МЕНЯТЬ GPIO ТОЛЬКО В ЭТОМ БЛОКЕ
@@ -112,6 +116,9 @@ esphome:
   # СЮДА СОБИРАЕМ ВСЕ ХЕДЕРЫ ПРОЕКТА:
   includes:
     - sd_player.h
+  # ДОБАВИЛИ ДВЕ СТРОЧКИ НИЖЕ ДЛЯ СКАЧИВАНИЯ ДВИЖКА ПЛЕЕРА:
+  libraries:
+    - ${audio_lib_url}
   platformio_options:
     build_flags:
       - -DCORE_DEBUG_LEVEL=0
