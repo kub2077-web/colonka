@@ -24,9 +24,7 @@ jobs:
 
       - name: Upload Firmware and Source Code
         uses: actions/upload-artifact@v4
-        if: always() # Важно! Этот флаг заставит GitHub выдать файлы, даже если компиляция упала с ошибкой
+        if: always()
         with:
           name: esp-project-files
-          path: |
-            firmware/.esphome/build/**/.pioenvs/**/*.bin
-            firmware/.esphome/build/*/src/main.cpp
+          path: firmware/.esphome/
