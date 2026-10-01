@@ -1,4 +1,3 @@
-SdPlayer *my_sd_player = nullptr;
 #pragma once
 
 #include <algorithm>
@@ -353,4 +352,5 @@ class SdPlayer {
   bool started_event_{false};
   bool failed_event_{false};
 };
-extern SdPlayer *my_sd_player;
+
+SdPlayer *my_sd_player = nullptr;
