@@ -121,6 +121,11 @@ esphome:
     then:
       - logger.log: "Умная колонка ESP32-S3 запущена"
       - light.turn_off: status_ring
+            # ДОБАВИЛИ ДВЕ СТРОЧКИ НИЖЕ ДЛЯ ИНИЦИАЛИЗАЦИИ ПЛЕЕРА:
+      - lambda: |-
+          id(sd_player_instance) = new SdPlayer();
+          static_cast<SdPlayer *>(id(sd_player_instance))->begin(41, 42, 44);
+      - script.execute: sd_bootstrap
       - delay: 2s
       - if:
           condition:
