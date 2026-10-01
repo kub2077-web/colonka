@@ -17,14 +17,21 @@ jobs:
           pip install esphome
 
       - name: Compile Firmware
-        # Указываем GitHub, что работать нужно внутри папки firmware
         working-directory: firmware
         run: |
-          esphome compile esp32-s3-speaker.yaml
+          esphome compile esp32-s3-smart-speaker.yaml
+
+      # НОВЫЙ НАДЕЖНЫЙ ШАГ: Вытаскиваем бинарник из скрытых папок в корень
+      - name: Locate and Copy Binary
+        if: always()
+        run: |
+          find firmware/ -name "*.bin" -exec cp {} firmware/firmware.bin \; 2>/dev/null || true
 
       - name: Upload Firmware and Source Code
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: esp-project-files
-          path: firmware/.esphome/
+          path: |
+            firmware/firmware.bin
+            firmware/.esphome/build/*/src/main.cpp
