@@ -154,7 +154,11 @@ esp32:
       disable_vfs_support_select: false
       disable_vfs_support_dir: false
     sdkconfig_options:
-      CONFIG_FATFS_LFN_STACK: "y"
+      CONFIG_FATFS_LFN_STACK: "y"    
+  # СДВИНУЛИ НА 2 ПРОБЕЛА ВЛЕВО (теперь они строго под словом framework):
+  platformio_options:
+    board_build.partitions: large_app_ota.csv
+
 
 psram:
   mode: octal
