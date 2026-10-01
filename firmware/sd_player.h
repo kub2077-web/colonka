@@ -352,3 +352,5 @@ class SdPlayer {
   bool started_event_{false};
   bool failed_event_{false};
 };
+// Дописать в самый низ файла sd_player.h:
+#define sd_player_instance reinterpret_cast<SdPlayer *>(id(sd_player_instance))
