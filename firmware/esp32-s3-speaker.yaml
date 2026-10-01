@@ -130,9 +130,8 @@ esphome:
       - light.turn_off: status_ring
             # ДОБАВИЛИ ДВЕ СТРОЧКИ НИЖЕ ДЛЯ ИНИЦИАЛИЗАЦИИ ПЛЕЕРА:
       - lambda: |-
-          auto *player = new SdPlayer();
-          id(sd_player_instance) = reinterpret_cast<custom_component::CustomComponentConstructor *>(player);
-          player->begin(41, 42, 44);
+          my_sd_player = new SdPlayer();
+          my_sd_player->begin(41, 42, 44);
       - script.execute: sd_bootstrap
       - delay: 2s
       - if:
