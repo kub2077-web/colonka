@@ -1,0 +1,83 @@
+name: Compile ESPHome
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Cache downloaded tools and packages, but not .esphome build outputs:
+      # the generated main.cpp and firmware binaries must come from this commit.
+      - name: Cache PlatformIO and pip
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: ${{ runner.os }}-esphome-py311-${{ hashFiles('firmware/**/*.yaml', 'firmware/**/*.h', 'firmware/**/*.cpp', 'firmware/**/*.csv', 'firmware/components/**/*.py') }}
+          restore-keys: |
+            ${{ runner.os }}-esphome-py311-
+
+      - name: Install ESPHome
+        run: python -m pip install esphome
+
+      - name: Create ESPHome secrets
+        env:
+          ESPHOME_SECRETS_YAML: ${{ secrets.ESPHOME_SECRETS_YAML }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          content = os.environ.get("ESPHOME_SECRETS_YAML", "")
+          if not content.strip():
+              raise SystemExit(
+                  "Missing GitHub Actions repository secret: ESPHOME_SECRETS_YAML"
+              )
+
+          required_keys = ("speaker_api_key:", "speaker_ota_password:")
+          missing = [key for key in required_keys if key not in content]
+          if missing:
+              raise SystemExit(
+                  "ESPHOME_SECRETS_YAML must contain keys: " + ", ".join(missing)
+              )
+
+          Path("firmware/secrets.yaml").write_text(
+              content.rstrip() + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Compile firmware
+        run: esphome compile firmware/esp32-s3-speaker.yaml
+
+      - name: List generated firmware outputs
+        if: always()
+        run: |
+          find firmware/.esphome/build -type f \
+            \( -name "main.cpp" -o -name "*.bin" \) -print 2>/dev/null || true
+
+      - name: Upload firmware binaries and generated source
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: esp-project-files-${{ github.sha }}
+          path: |
+            firmware/.esphome/build/*/.pioenvs/*/*.bin
+            firmware/.esphome/build/*/src/main.cpp
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
