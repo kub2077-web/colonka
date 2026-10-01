@@ -16,11 +16,9 @@
 # отправляет PCM через тот же BCLK/LRCLK/DOUT, что и MAX98357A. Для ESP32-S3
 # библиотека использует I2S1, а голосовой bus ESPHome остаётся на I2S0.
 
-globals:
-  - id: sd_player_instance
-    type: custom_component::CustomComponentConstructor *
-    restore_value: no
-    initial_value: "nullptr"
+# Объявляем реальное физическое хранилище для нашего внешнего указателя C++
+esphome:
+  custom_code: "SdPlayer *my_sd_player = nullptr;"
     
   - id: sd_start_result
     type: bool
@@ -75,16 +73,16 @@ switch:
     turn_on_action:
       - if:
           condition:
-            lambda: return id(sd_player_instance) != nullptr;
+            lambda: return id(my_sd_player) != nullptr;
           then:
-            - lambda: id(sd_player_instance)->set_shuffle(true);
+            - lambda: id(my_sd_player)->set_shuffle(true);
       - script.execute: sd_publish_library
     turn_off_action:
       - if:
           condition:
-            lambda: return id(sd_player_instance) != nullptr;
+            lambda: return id(my_sd_player) != nullptr;
           then:
-            - lambda: id(sd_player_instance)->set_shuffle(false);
+            - lambda: id(my_sd_player)->set_shuffle(false);
       - script.execute: sd_publish_library
 
 script:
@@ -102,10 +100,10 @@ script:
     then:
       - if:
           condition:
-            lambda: return id(sd_player_instance) != nullptr;
+            lambda: return id(my_sd_player) != nullptr;
           then:
             - lambda: |-
-                auto *player = id(sd_player_instance);
+                auto *player = id(my_sd_player);
                 id(sd_track_count).publish_state(player->track_count());
                 id(sd_track_number).publish_state(
                     player->track_count() == 0 ? 0 : player->current_index() + 1);
@@ -118,10 +116,10 @@ script:
     then:
       - if:
           condition:
-            lambda: return id(sd_player_instance) != nullptr;
+            lambda: return id(my_sd_player) != nullptr;
           then:
             - lambda: |-
-                const bool mounted = id(sd_player_instance)->scan();
+                const bool mounted = id(my_sd_player)->scan();
                 id(sd_start_result) = mounted;
             - script.execute: sd_publish_library
             - if:
@@ -141,10 +139,10 @@ script:
     then:
       - if:
           condition:
-            lambda: return id(sd_player_instance) != nullptr;
+            lambda: return id(my_sd_player) != nullptr;
           then:
             - lambda: |-
-                id(sd_player_instance)->stop();
+                id(my_sd_player)->stop();
                 id(sd_player_active) = false;
                 if (id(sm_audio_owner) == 2) {
                   id(sm_audio_owner) = 0;
@@ -189,10 +187,10 @@ script:
           volume: !lambda "return id(sm_volume_level);"
       - if:
           condition:
-            lambda: return id(sd_player_instance) != nullptr;
+            lambda: return id(my_sd_player) != nullptr;
           then:
             - lambda: |-
-                auto *player = id(sd_player_instance);
+                auto *player = id(my_sd_player);
                 if (player->track_count() == 0) {
                   player->scan();
                 }
@@ -216,13 +214,13 @@ script:
       - if:
           condition:
             lambda: |-
-              return id(sd_player_instance) != nullptr &&
-                     id(sd_player_instance)->active();
+              return id(my_sd_player) != nullptr &&
+                     id(my_sd_player)->active();
           then:
-            - lambda: id(sd_player_instance)->pause_resume();
+            - lambda: id(my_sd_player)->pause_resume();
             - if:
                 condition:
-                  lambda: return id(sd_player_instance)->paused();
+                  lambda: return id(my_sd_player)->paused();
                 then:
                   - script.execute: sm_playback_paused
                   - script.execute:
@@ -241,9 +239,9 @@ script:
     then:
       - if:
           condition:
-            lambda: return id(sd_player_instance) != nullptr;
+            lambda: return id(my_sd_player) != nullptr;
           then:
-            - lambda: id(sd_player_instance)->set_volume(volume);
+            - lambda: id(my_sd_player)->set_volume(volume);
 
   - id: sd_next
     mode: restart
@@ -255,8 +253,8 @@ script:
             - if:
                 condition:
                   lambda: |-
-                    return id(sd_player_instance) != nullptr &&
-                           id(sd_player_instance)->next();
+                    return id(my_sd_player) != nullptr &&
+                           id(my_sd_player)->next();
                 then:
                   - script.execute:
                       id: sd_publish_status
@@ -274,8 +272,8 @@ script:
             - if:
                 condition:
                   lambda: |-
-                    return id(sd_player_instance) != nullptr &&
-                           id(sd_player_instance)->previous();
+                    return id(my_sd_player) != nullptr &&
+                           id(my_sd_player)->previous();
                 then:
                   - script.execute:
                       id: sd_publish_status
@@ -326,10 +324,10 @@ interval:
     then:
       - if:
           condition:
-            lambda: return id(sd_player_instance) != nullptr;
+            lambda: return id(my_sd_player) != nullptr;
           then:
             - lambda: |-
-                auto *player = id(sd_player_instance);
+                auto *player = id(my_sd_player);
                 player->loop();
                 if (player->take_started_event()) {
                   id(sd_on_started).execute();
