@@ -156,7 +156,7 @@ esp32:
       disable_vfs_support_dir: false
     sdkconfig_options:
       CONFIG_FATFS_LFN_STACK: "y"    
-
+  partitions: huge_app.csv
 
 psram:
   mode: octal
