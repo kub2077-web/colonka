@@ -1,3 +1,4 @@
+SdPlayer *my_sd_player = nullptr;
 #pragma once
 
 #include <algorithm>
