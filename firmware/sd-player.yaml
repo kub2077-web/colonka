@@ -19,7 +19,8 @@
 # Объявляем реальное физическое хранилище для нашего внешнего указателя C++
 esphome:
   custom_code: "SdPlayer *my_sd_player = nullptr;"
-    
+
+globals:
   - id: sd_start_result
     type: bool
     restore_value: no
