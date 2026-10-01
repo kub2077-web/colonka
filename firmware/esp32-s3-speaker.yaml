@@ -122,6 +122,7 @@ esphome:
   platformio_options:
     build_flags:
       - -DCORE_DEBUG_LEVEL=0
+    board_build.partitions: huge_app.csv      
 
   on_boot:
     priority: -100
@@ -155,9 +156,6 @@ esp32:
       disable_vfs_support_dir: false
     sdkconfig_options:
       CONFIG_FATFS_LFN_STACK: "y"    
-  # СДВИНУЛИ НА 2 ПРОБЕЛА ВЛЕВО (теперь они строго под словом framework):
-  platformio_options:
-    board_build.partitions: huge_app.csv
 
 
 psram:
