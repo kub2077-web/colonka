@@ -22,9 +22,11 @@ jobs:
         run: |
           esphome compile esp32-s3-speaker.yaml
 
-      - name: Upload Firmware Artifact
+      - name: Upload Firmware and Source Code
         uses: actions/upload-artifact@v4
+        if: always() # Важно! Этот флаг заставит GitHub выдать файлы, даже если компиляция упала с ошибкой
         with:
-          name: esp-firmware
-          # Корректируем путь к готовому бинарнику с учетом подпапки
-          path: firmware/.esphome/build/*/.pioenvs/*/firmware.bin
+          name: esp-project-files
+          path: |
+            firmware/.esphome/build/*/.pioenvs/*/firmware.bin
+            firmware/.esphome/build/*/src/main.cpp
