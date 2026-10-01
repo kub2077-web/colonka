@@ -72,16 +72,16 @@ switch:
     turn_on_action:
       - if:
           condition:
-            lambda: return id(my_sd_player) != nullptr;
+            lambda: return my_sd_player != nullptr;
           then:
-            - lambda: id(my_sd_player)->set_shuffle(true);
+            - lambda: my_sd_player->set_shuffle(true);
       - script.execute: sd_publish_library
     turn_off_action:
       - if:
           condition:
-            lambda: return id(my_sd_player) != nullptr;
+            lambda: return my_sd_player != nullptr;
           then:
-            - lambda: id(my_sd_player)->set_shuffle(false);
+            - lambda: my_sd_player->set_shuffle(false);
       - script.execute: sd_publish_library
 
 script:
@@ -99,10 +99,10 @@ script:
     then:
       - if:
           condition:
-            lambda: return id(my_sd_player) != nullptr;
+            lambda: return my_sd_player != nullptr;
           then:
             - lambda: |-
-                auto *player = id(my_sd_player);
+                auto *player = my_sd_player;
                 id(sd_track_count).publish_state(player->track_count());
                 id(sd_track_number).publish_state(
                     player->track_count() == 0 ? 0 : player->current_index() + 1);
@@ -115,10 +115,10 @@ script:
     then:
       - if:
           condition:
-            lambda: return id(my_sd_player) != nullptr;
+            lambda: return my_sd_player != nullptr;
           then:
             - lambda: |-
-                const bool mounted = id(my_sd_player)->scan();
+                const bool mounted = my_sd_player->scan();
                 id(sd_start_result) = mounted;
             - script.execute: sd_publish_library
             - if:
@@ -138,10 +138,10 @@ script:
     then:
       - if:
           condition:
-            lambda: return id(my_sd_player) != nullptr;
+            lambda: return my_sd_player != nullptr;
           then:
             - lambda: |-
-                id(my_sd_player)->stop();
+                my_sd_player->stop();
                 id(sd_player_active) = false;
                 if (id(sm_audio_owner) == 2) {
                   id(sm_audio_owner) = 0;
@@ -186,10 +186,10 @@ script:
           volume: !lambda "return id(sm_volume_level);"
       - if:
           condition:
-            lambda: return id(my_sd_player) != nullptr;
+            lambda: return my_sd_player != nullptr;
           then:
             - lambda: |-
-                auto *player = id(my_sd_player);
+                auto *player = my_sd_player;
                 if (player->track_count() == 0) {
                   player->scan();
                 }
@@ -213,13 +213,13 @@ script:
       - if:
           condition:
             lambda: |-
-              return id(my_sd_player) != nullptr &&
-                     id(my_sd_player)->active();
+              return my_sd_player != nullptr &&
+                     my_sd_player->active();
           then:
-            - lambda: id(my_sd_player)->pause_resume();
+            - lambda: my_sd_player->pause_resume();
             - if:
                 condition:
-                  lambda: return id(my_sd_player)->paused();
+                  lambda: return my_sd_player->paused();
                 then:
                   - script.execute: sm_playback_paused
                   - script.execute:
@@ -238,9 +238,9 @@ script:
     then:
       - if:
           condition:
-            lambda: return id(my_sd_player) != nullptr;
+            lambda: return my_sd_player != nullptr;
           then:
-            - lambda: id(my_sd_player)->set_volume(volume);
+            - lambda: my_sd_player->set_volume(volume);
 
   - id: sd_next
     mode: restart
@@ -252,8 +252,8 @@ script:
             - if:
                 condition:
                   lambda: |-
-                    return id(my_sd_player) != nullptr &&
-                           id(my_sd_player)->next();
+                    return my_sd_player != nullptr &&
+                           my_sd_player->next();
                 then:
                   - script.execute:
                       id: sd_publish_status
@@ -271,8 +271,8 @@ script:
             - if:
                 condition:
                   lambda: |-
-                    return id(my_sd_player) != nullptr &&
-                           id(my_sd_player)->previous();
+                    return my_sd_player != nullptr &&
+                           my_sd_player->previous();
                 then:
                   - script.execute:
                       id: sd_publish_status
@@ -323,10 +323,10 @@ interval:
     then:
       - if:
           condition:
-            lambda: return id(my_sd_player) != nullptr;
+            lambda: return my_sd_player != nullptr;
           then:
             - lambda: |-
-                auto *player = id(my_sd_player);
+                auto *player = my_sd_player;
                 player->loop();
                 if (player->take_started_event()) {
                   id(sd_on_started).execute();
