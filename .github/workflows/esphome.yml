@@ -1,5 +1,9 @@
 name: Compile ESPHome
-on: [push, workflow_dispatch]
+
+on:
+  push:
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,20 +16,24 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Cache PlatformIO & ESPHome
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+            firmware/.esphome
+          key: ${{ runner.os }}-esphome-${{ hashFiles('firmware/*.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-esphome-
+
       - name: Install ESPHome
         run: |
           pip install esphome
 
       - name: Compile Firmware
-        working-directory: firmware
         run: |
-          esphome compile esp32-s3-smart-speaker.yaml
-
-      # НОВЫЙ НАДЕЖНЫЙ ШАГ: Вытаскиваем бинарник из скрытых папок в корень
-      - name: Locate and Copy Binary
-        if: always()
-        run: |
-          find firmware/ -name "*.bin" -exec cp {} firmware/firmware.bin \; 2>/dev/null || true
+          esphome compile firmware/esp32-s3-smart-speaker.yaml
 
       - name: Upload Firmware and Source Code
         uses: actions/upload-artifact@v4
@@ -33,5 +41,5 @@ jobs:
         with:
           name: esp-project-files
           path: |
-            firmware/firmware.bin
+            firmware/.esphome/build/*/.pioenvs/*/*.bin
             firmware/.esphome/build/*/src/main.cpp
