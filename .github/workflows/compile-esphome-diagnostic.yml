@@ -38,7 +38,7 @@ jobs:
         run: esphome config firmware/esp32-s3-diagnostic-no-psram.yaml
 
       - name: Validate PSRAM diagnostic without boot-time memory test
-        run: esphome config firmware/esp32-s3-diagnostic-psram-no-memtest.yaml
+        run: esphome config firmware/esp32-s3-diagnostic-psram-no-.yaml
 
       - name: Compile PSRAM-enabled diagnostic
         run: esphome compile firmware/esp32-s3-diagnostic.yaml
@@ -47,14 +47,14 @@ jobs:
         run: esphome compile firmware/esp32-s3-diagnostic-no-psram.yaml
 
       - name: Compile PSRAM diagnostic without boot-time memory test
-        run: esphome compile firmware/esp32-s3-diagnostic-psram-no-memtest.yaml
+        run: esphome compile firmware/esp32-s3-diagnostic-psram-no-.yaml
 
       - name: Verify build outputs
         run: |
           for build_dir in \
             firmware/.esphome/build/esp32-s3-startup-diagnostic \
             firmware/.esphome/build/esp32-s3-startup-no-psram \
-            firmware/.esphome/build/esp32-s3-startup-psram-no-memtest; do
+            firmware/.esphome/build/esp32-s3-startup-psram-no-; do
             find "$build_dir" -type f \( -name "*.bin" -o -name "*.elf" -o -name "*.map" \) -print
 
             for extension in bin elf map; do
@@ -78,10 +78,10 @@ jobs:
             firmware/.esphome/build/esp32-s3-startup-no-psram/**/*.elf
             firmware/.esphome/build/esp32-s3-startup-no-psram/**/*.map
             firmware/.esphome/build/esp32-s3-startup-no-psram/**/main.cpp
-            firmware/.esphome/build/esp32-s3-startup-psram-no-memtest/**/*.bin
-            firmware/.esphome/build/esp32-s3-startup-psram-no-memtest/**/*.elf
-            firmware/.esphome/build/esp32-s3-startup-psram-no-memtest/**/*.map
-            firmware/.esphome/build/esp32-s3-startup-psram-no-memtest/**/main.cpp
+            firmware/.esphome/build/esp32-s3-startup-psram-no-/**/*.bin
+            firmware/.esphome/build/esp32-s3-startup-psram-no-/**/*.elf
+            firmware/.esphome/build/esp32-s3-startup-psram-no-/**/*.map
+            firmware/.esphome/build/esp32-s3-startup-psram-no-/**/main.cpp
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
