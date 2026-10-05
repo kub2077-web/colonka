@@ -135,6 +135,7 @@ esp32:
       disable_vfs_support_dir: false
     sdkconfig_options:
       CONFIG_FATFS_LFN_STACK: "y"
+      CONFIG_ESPTOOLPY_FLASHFREQ_40M: "y"
   # Плата N16R8 имеет 16 МБ flash; три слота по 5 МБ оставляют запас для OTA.
   flash_size: 16MB
   partitions: huge_app.csv
