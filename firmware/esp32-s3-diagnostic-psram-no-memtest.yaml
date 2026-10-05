@@ -1,0 +1,39 @@
+# Minimal ESPHome image to isolate the ESP-IDF PSRAM memory test.
+# PSRAM remains enabled in octal mode at 40 MHz; only the boot-time
+# CONFIG_SPIRAM_MEMTEST is disabled. Diagnostic use only.
+esphome:
+  name: esp32-s3-startup-psram-no-memtest
+  friendly_name: ESP32-S3 PSRAM No-Memtest Diagnostic
+  min_version: 2025.7.0
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  flash_frequency: 40MHz
+  partitions: huge_app.csv
+  framework:
+    type: arduino
+    sdkconfig_options:
+      CONFIG_SPIRAM_MEMTEST: "n"
+
+psram:
+  mode: octal
+  speed: 40MHz
+
+logger:
+  level: VERY_VERBOSE
+  hardware_uart: UART0
+  baud_rate: 115200
+
+# UART0 uses GPIO43/44 on ESP32-S3. No audio components are included here.
+interval:
+  - interval: 2s
+    then:
+      - lambda: |-
+          ESP_LOGI(
+            "diag",
+            "DIAG_ALIVE_PSRAM_NO_MEMTEST uptime=%lu s heap_free=%u psram_free=%u",
+            static_cast<unsigned long>(millis() / 1000U),
+            static_cast<unsigned>(ESP.getFreeHeap()),
+            static_cast<unsigned>(ESP.getFreePsram()));
