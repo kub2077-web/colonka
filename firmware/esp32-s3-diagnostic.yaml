@@ -1,0 +1,38 @@
+# Minimal ESPHome image for diagnosing early ESP32-S3 startup resets.
+# Keep separate from esp32-s3-speaker.yaml: this image intentionally omits
+# speaker peripherals and routes application logs to UART0 (GPIO43/44).
+esphome:
+  name: esp32-s3-startup-diagnostic
+  friendly_name: ESP32-S3 Startup Diagnostic
+  min_version: 2025.7.0
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  flash_frequency: 40MHz
+  partitions: huge_app.csv
+  framework:
+    type: arduino
+
+psram:
+  mode: octal
+  speed: 40MHz
+
+logger:
+  level: VERY_VERBOSE
+  hardware_uart: UART0
+  baud_rate: 115200
+
+# The full speaker image uses GPIO43/44 for I2S. This diagnostic image has no
+# audio components, so UART0 can use those pins without a software conflict.
+interval:
+  - interval: 2s
+    then:
+      - lambda: |-
+          ESP_LOGI(
+            "diag",
+            "DIAG_ALIVE uptime=%lu s heap_free=%u psram_free=%u",
+            static_cast<unsigned long>(millis() / 1000U),
+            static_cast<unsigned>(ESP.getFreeHeap()),
+            static_cast<unsigned>(ESP.getFreePsram()));
