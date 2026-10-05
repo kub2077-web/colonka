@@ -2,7 +2,7 @@
 # PSRAM remains enabled in octal mode at 40 MHz; only the boot-time
 # CONFIG_SPIRAM_MEMTEST is disabled. Diagnostic use only.
 esphome:
-  name: esp32-s3-startup-psram-no-memtest
+  name: esp32-s3-startup-psram-no-
   friendly_name: ESP32-S3 PSRAM No-Memtest Diagnostic
   min_version: 2025.7.0
 
